@@ -32,6 +32,7 @@ Look at the Yahoo version closely to see how it works.  Maybe can adopt
 that completely if it makes more sense...
 
 R. White, 2006 November 6
+S DIAZ with Added path management
 """
 
 import json
@@ -198,6 +199,7 @@ def main():
         prog='xml2json',
         usage='%prog -t xml2json -o file.json [file]'
     )
+    p.add_option('--path', '-p', help="Load path instead of one file")
     p.add_option('--type', '-t', help="'xml2json' or 'json2xml'", default="xml2json")
     p.add_option('--out', '-o', help="Write to OUT instead of stdout")
     p.add_option(
@@ -222,28 +224,52 @@ def main():
             sys.stderr.write("Problem reading '{0}'\n".format(arguments[0]))
             p.print_help()
             sys.exit(-1)
-
-    input = inputstream.read()
-
-    strip = 0
-    strip_ns = 0
-    if options.strip_text:
-        strip = 1
-    if options.strip_ns:
-        strip_ns = 1
-    if options.strip_nl:
-        input = input.replace('\n', '').replace('\r','')
-    if (options.type == "xml2json"):
-        out = xml2json(input, options, strip_ns, strip)
+    list_values=[];
+    name_values=[];
+    if options.path:
+        name_values=os.listdir(options.path)
+        list_values= [None] * len(name_values)
+        for elem in range(0,len(name_values)):
+            list_values[elem]=open(os.path.join(options.path,name_values[elem]))
     else:
-        out = json2xml(input)
+        list_values=[inputstream]
+        if len(arguments)>0:
+            name_values=[arguments[0]]
+
+    for elem in range(0,len(list_values)):
+        input = list_values[elem].read()
+
+        strip = 0
+        strip_ns = 0
+        if options.strip_text:
+            strip = 1
+        if options.strip_ns:
+            strip_ns = 1
+        if options.strip_nl:
+            input = input.replace('\n', '').replace('\r','')
+        try:
+            if (options.type == "xml2json"):
+                out = xml2json(input, options, strip_ns, strip)
+            else:
+                out = json2xml(input)
+            if len(list_values)>1:
+                outName=".json"
+                if (options.type == "json2xml"):
+                    outName=".xml"
+                print ("Write "+name_values[elem]+outName)
+                file = open(os.path.join(options.path,name_values[elem]+outName), 'w')
+                file.write(out)
+                file.close()
+        except :
+            print ("Not a good file "+ name_values[elem]+outName)
 
     if (options.out):
         file = open(options.out, 'w')
         file.write(out)
         file.close()
     else:
-        print(out)
+        if len(list_values)==1 :
+            print(out)
 
 if __name__ == "__main__":
     main()

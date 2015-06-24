@@ -30,6 +30,10 @@ Strip namespace in the json
 
     $ xml2json -t xml2json -o file.json file.xml --strip_namespace
 
+Entire Path managent  (-p)
+
+    $ xml2json -t xml2json -p .  --strip_namespace
+
 In code
 
     from xml2json import json2xml
